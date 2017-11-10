@@ -448,7 +448,7 @@ class Formula(object):
         assert isinstance(array, np.ndarray), u"Function {}@{}<{}>() --> <{}>{} doesn't return a numpy array".format(
             column.name, entity.key, str(period), str(period), array).encode('utf-8')
         if isinstance(column, columns.FloatCol) or isinstance(column, columns.IntCol):
-            if not isinstance(column, columns.AgeCol):
+            if array.dtype != 'timedelta64[Y]':
                 assert not np.isnan(np.sum(array)), u"Function {}@{}<{}> returned nan values : {}".format(
                     column.name, entity.key, str(period), array).encode('utf-8')
                 assert np.isfinite(array).all(), u"Function {}@{}<{}> returned nonfinite values : {}".format(
