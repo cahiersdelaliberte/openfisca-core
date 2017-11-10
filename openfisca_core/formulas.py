@@ -872,9 +872,9 @@ def new_filled_column(
                 ))
         # Sort dated formulas by start instant and add missing stop instants.
         dated_formulas_class.sort(key = lambda dated_formula_class: dated_formula_class['start_instant'])
-        if start_date:
+        if start_date and dated_formulas_class:
             dated_formulas_class[0]['start_instant'] = max(dated_formulas_class[0]['start_instant'], instant(start_date))
-        if stop_date:
+        if stop_date and dated_formulas_class:
             stop_instant = dated_formulas_class[-1]['stop_instant']
             stop_instant = min(stop_instant, instant(stop_date)) if stop_instant else instant(stop_date)
             dated_formulas_class[-1]['stop_instant'] = stop_instant
