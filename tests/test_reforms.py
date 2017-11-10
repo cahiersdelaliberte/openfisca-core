@@ -8,16 +8,23 @@ from nose.tools import raises
 from nose.tools import assert_equal
 
 from openfisca_core import columns, periods, reforms
-from openfisca_core.periods import MONTH
 from openfisca_core.reforms import Reform
 from openfisca_core.formulas import dated_function
-from openfisca_core.variables import Variable, DatedVariable
 from openfisca_core.periods import Instant
 from openfisca_core.tools import assert_near
-from openfisca_dummy_country.entities import Famille
+from openfisca_core.model_api import *
+from openfisca_dummy_country.entities import Famille, Individu
 from openfisca_dummy_country import DummyTaxBenefitSystem
 
 tax_benefit_system = DummyTaxBenefitSystem()
+
+class rempli_obligation_scolaire(Variable):
+    column = BoolCol(default = True)
+    entity = Individu
+    label = u"La personne rempli ses obligations scolaires"
+    definition_period = MONTH
+
+tax_benefit_system.add_variable(rempli_obligation_scolaire)
 
 
 class test_rsa_neutralization(Reform):
@@ -55,14 +62,14 @@ def test_default_variable_neutralization():
 
     reform = test_rempli_obligation_scolaire_neutralization(tax_benefit_system)
 
-    year = 2013
+    period = "2013-01"
     scenario = reform.new_scenario().init_single_entity(
-        period = year,
-        famille = dict(depcom = '75101'),
+        period = period,
+        famille = dict(),
         parent1 = dict(),
         )
     simulation = scenario.new_simulation(reference = True)
-    rempli_obligation_scolaire = simulation.calculate('rempli_obligation_scolaire')
+    rempli_obligation_scolaire = simulation.calculate('rempli_obligation_scolaire', period)
     assert_near(rempli_obligation_scolaire, [True], absolute_error_margin = 0)
 
 
