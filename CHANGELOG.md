@@ -1,5 +1,11 @@
 # Changelog
 
+# 20.0.1 
+
+#### Bug fix
+
+- Fix API response encoding from ascii to utf-8
+
 # 20.0.0 [#590](https://github.com/openfisca/openfisca-core/pull/583)
 
 #### Breaking changes
