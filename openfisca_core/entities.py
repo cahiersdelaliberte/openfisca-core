@@ -231,11 +231,21 @@ See more information at <http://openfisca.org/doc/coding-the-legislation/35_peri
         return holder
 
 
+# Decorator to indicate that when called on a projector, the outcome of the function must be projected.
+# For instance person.household.sum(...) must be projected on person, while it would not make sense for person.household.get_holder.
+def projectable(function):
+    """
+    """
+    function.projectable = True
+    return function
+
+
 class PersonEntity(Entity):
     is_person = True
 
     # Projection person -> person
 
+    @projectable
     def has_role(self, role):
         self.check_role_validity(role)
         entity = self.simulation.get_entity(role.entity_class)
@@ -244,6 +254,7 @@ class PersonEntity(Entity):
         else:
             return entity.members_role == role
 
+    @projectable
     def value_from_partner(self, array, entity, role):
         self.check_array_compatible_with_entity(array)
         self.check_role_validity(role)
@@ -252,8 +263,8 @@ class PersonEntity(Entity):
             raise Exception('Projection to partner is only implemented for roles having exactly two subroles.')
 
         [subrole_1, subrole_2] = role.subroles
-        value_subrole_1 = entity.project(entity.value_from_person(array, subrole_1))
-        value_subrole_2 = entity.project(entity.value_from_person(array, subrole_2))
+        value_subrole_1 = entity.value_from_person(array, subrole_1)
+        value_subrole_2 = entity.value_from_person(array, subrole_2)
 
         return np.select(
             [self.has_role(subrole_1), self.has_role(subrole_2)],
@@ -367,6 +378,7 @@ class GroupEntity(Entity):
 
     #  Aggregation persons -> entity
 
+    @projectable
     def sum(self, array, role = None):
         self.check_role_validity(role)
         self.simulation.persons.check_array_compatible_with_entity(array)
@@ -379,10 +391,12 @@ class GroupEntity(Entity):
         else:
             return np.bincount(self.members_entity_id, weights = array)
 
+    @projectable
     def any(self, array, role = None):
         sum_in_entity = self.sum(array, role = role)
         return (sum_in_entity > 0)
 
+    @projectable
     def reduce(self, array, reducer, neutral_element, role = None):
         self.simulation.persons.check_array_compatible_with_entity(array)
         self.check_role_validity(role)
@@ -401,15 +415,19 @@ class GroupEntity(Entity):
 
         return result
 
+    @projectable
     def all(self, array, role = None):
         return self.reduce(array, reducer = np.logical_and, neutral_element = True, role = role)
 
+    @projectable
     def max(self, array, role = None):
         return self.reduce(array, reducer = np.maximum, neutral_element = - np.infty, role = role)
 
+    @projectable
     def min(self, array, role = None):
         return self.reduce(array, reducer = np.minimum, neutral_element = np.infty, role = role)
 
+    @projectable
     def nb_persons(self, role = None):
         if role:
             role_condition = self.members.has_role(role)
@@ -419,6 +437,7 @@ class GroupEntity(Entity):
 
     # Projection person -> entity
 
+    @projectable
     def value_from_person(self, array, role, default = 0):
         self.check_role_validity(role)
         if role.max != 1:
@@ -435,6 +454,7 @@ class GroupEntity(Entity):
 
         return result
 
+    @projectable
     def value_from_first_person(self, array):
         self.simulation.persons.check_array_compatible_with_entity(array)
         position_filter = (self.members_position == 0)
@@ -443,6 +463,7 @@ class GroupEntity(Entity):
 
     # Projection entity -> person(s)
 
+    @projectable
     def project(self, array, role = None):
         self.check_array_compatible_with_entity(array)
         self.check_role_validity(role)
@@ -451,6 +472,7 @@ class GroupEntity(Entity):
 
     # Does it really make sense ? Should not we use roles instead of position when projecting on someone in particular ?
     # Doesn't seem to be used, maybe should just not introduce
+    @projectable
     def project_on_first_person(self, array):
         self.check_array_compatible_with_entity(array)
         entity_position_array = self.members_position
@@ -458,6 +480,7 @@ class GroupEntity(Entity):
         position_filter = (entity_position_array == 0)
         return np.where(position_filter, array[entity_index_array], 0)
 
+    @projectable
     def share_between_members(self, array, role = None):
         self.check_array_compatible_with_entity(array)
         self.check_role_validity(role)
@@ -468,6 +491,7 @@ class GroupEntity(Entity):
 
     # Doesn't seem to be used either, as we can do entity1.first_person.entity2
     # Maybe should not introduce
+    @projectable
     def transpose(self, array, origin_entity):
         origin_entity = self.simulation.get_entity(origin_entity)
         origin_entity.check_array_compatible_with_entity(array)
@@ -495,7 +519,19 @@ class Projector(object):
     parent = None
 
     def __getattr__(self, attribute):
-        return (get_projector_from_shortcut(self.reference_entity, attribute, parent = self) or getattr(self.reference_entity, attribute))
+        projector = get_projector_from_shortcut(self.reference_entity, attribute, parent = self)
+        if projector:
+            return projector
+
+        reference_attr = getattr(self.reference_entity, attribute)
+        if not hasattr(reference_attr, 'projectable'):
+            return reference_attr
+
+        def projector_function(*args, **kwargs):
+            result = reference_attr(*args, **kwargs)
+            return self.transform_and_bubble_up(result)
+
+        return projector_function
 
     def __call__(self, *args, **kwargs):
         result = self.reference_entity(*args, **kwargs)
