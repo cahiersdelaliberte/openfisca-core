@@ -1,5 +1,13 @@
 # Changelog
 
+## 20.3.0 [#603](https://github.com/openfisca/openfisca-core/pull/603)
+
+#### New features
+
+- Improve `Tracer`:
+  - Make aggregation more efficient
+  - Introduce [`tracer.print_trace`](http://openfisca.readthedocs.io/en/latest/tracer.html#openfisca_core.tracers.Tracer.print_trace)
+
 ## 20.1.0 [#598](https://github.com/openfisca/openfisca-core/pull/598)
 
 #### New features
