@@ -8,7 +8,7 @@ from flask_cors import CORS
 import dpath
 
 from openfisca_core.simulations import Simulation, SituationParsingError
-from enum import Enum
+from indexed_enums import Enum
 from loader import build_data
 import traceback
 import logging
