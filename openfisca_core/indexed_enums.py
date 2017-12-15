@@ -6,8 +6,11 @@ from enum import Enum as BaseEnum
 
 class EnumArray(np.ndarray):
     """
-        Numpy array subclass representing an array of enum items
+        Numpy array subclass representing an array of enum items.
+
+        EnumArrays are encoded as int arrays to improve performance
     """
+
     dtype = np.int16
 
     # Subclassing np.ndarray is a little tricky. To read more about the two following methods, see https://docs.scipy.org/doc/numpy-1.13.0/user/basics.subclassing.html#slightly-more-realistic-example-attribute-added-to-existing-array.
@@ -46,6 +49,13 @@ class EnumArray(np.ndarray):
     def decode(self):
         """
             Return the array of enum items corresponding to self
+
+            >>> enum_array
+            >>> EnumArray([<HousingOccupancyStatus.free_lodger: u'Free logder'>])
+            >>> enum_array[0]
+            >>> 2  # Encoded value
+            >>> enum_array.decode()[0]
+            >>> <HousingOccupancyStatus.free_lodger: u'Free logder'>  # Decoded value
         """
         return np.select([self == item.index for item in self.enum], [item for item in self.enum])
 
