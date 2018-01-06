@@ -59,10 +59,10 @@ def transform_scale(scale):
             threshold_value = get_value(date, bracket['thresholds'])
             if threshold_value is not None:
                 brackets_transformed[date] = brackets_transformed.get(date) or {}
-                if hasattr(bracket, 'rates'):
+                if bracket.has_key('rates'):
                     rate_value = get_value(date, bracket['rates'])
                     brackets_transformed[date][threshold_value] = rate_value
-                if hasattr(bracket, 'amounts'):
+                if bracket.has_key('amounts'):
                     amount_value = get_value(date, bracket['amounts'])
                     brackets_transformed[date][threshold_value] = amount_value
 
@@ -71,7 +71,6 @@ def transform_scale(scale):
     latest_value_first_threshold = brackets[0]['thresholds'][latest_date_first_threshold]
     if latest_value_first_threshold is None:
         brackets_transformed[latest_date_first_threshold] = None
-
     return brackets_transformed
 
 
@@ -80,11 +79,9 @@ def walk_node(node, parameters, path_fragments):
 
     for child_name, child in children.items():
         if isinstance(child, ParameterNode):
-            log.debug(path_fragments + [child_name])
             walk_node(child, parameters, path_fragments + [child_name])
 
         else:
-            log.debug(child_name)
             object_transformed = {
                 'description': getattr(child, "description", None),
                 'id': u'.'.join(path_fragments + [child_name]),
