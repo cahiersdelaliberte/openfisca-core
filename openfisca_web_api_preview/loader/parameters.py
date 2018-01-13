@@ -33,22 +33,22 @@ def transform_scale(scale):
     # preprocess brackets
     brackets = []
     for bracket in scale.brackets:
-        bracket_json = { 'thresholds': transform_values_history(bracket.threshold) }
+        bracket_json = {'thresholds': transform_values_history(bracket.threshold)}
         if hasattr(bracket, 'rate'):
-            bracket_json.update({ 'rates': transform_values_history(bracket.rate) })
+            bracket_json.update({'rates': transform_values_history(bracket.rate)})
         if hasattr(bracket, 'amount'):
-            bracket_json.update({ 'amounts': transform_values_history(bracket.amount) })
+            bracket_json.update({'amounts': transform_values_history(bracket.amount)})
         brackets.append(bracket_json)
 
-    #brackets = [{
+    # brackets = [{
     #    'thresholds': transform_values_history(bracket.threshold),
     #    # 'rates': transform_values_history(bracket.rate),
     #   } for bracket in scale.brackets]
 
     dates = set(sum(
-        [ bracket['thresholds'].keys()
-         + ( bracket['rates'].keys() if hasattr(bracket, 'rates') else [] )
-         + ( bracket['amounts'].keys() if hasattr(bracket, 'amounts') else [] )
+        [bracket['thresholds'].keys()
+         + (bracket['rates'].keys() if hasattr(bracket, 'rates') else [])
+         + (bracket['amounts'].keys() if hasattr(bracket, 'amounts') else [])
          for bracket in brackets],
         []))  # flatten the dates and remove duplicates
 
@@ -59,10 +59,10 @@ def transform_scale(scale):
             threshold_value = get_value(date, bracket['thresholds'])
             if threshold_value is not None:
                 brackets_transformed[date] = brackets_transformed.get(date) or {}
-                if bracket.has_key('rates'):
+                if 'rates' in bracket:
                     rate_value = get_value(date, bracket['rates'])
                     brackets_transformed[date][threshold_value] = rate_value
-                if bracket.has_key('amounts'):
+                if 'amounts' in bracket:
                     amount_value = get_value(date, bracket['amounts'])
                     brackets_transformed[date][threshold_value] = amount_value
 
